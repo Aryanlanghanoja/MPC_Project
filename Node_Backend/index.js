@@ -60,14 +60,14 @@ app.get('/', (req, res) => {
   res.json({
     message: 'Smart Door Lock Backend API',
     version: '1.0.0',
-    endpoints: {
-      auth: '/api/auth',
-      devices: '/api/devices',
-      schedules: '/api/schedules',
-      overrides: '/api/overrides',
-      logs: '/api/logs',
-      deviceComm: '/api/device-comm'
-    }
+    // endpoints: {
+    //   auth: '/api/auth',
+    //   devices: '/api/devices',
+    //   schedules: '/api/schedules',
+    //   overrides: '/api/overrides',
+    //   logs: '/api/logs',
+    //   deviceComm: '/api/device-comm'
+    // }
   });
 });
 

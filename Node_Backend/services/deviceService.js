@@ -10,7 +10,7 @@ class DeviceService {
       // Check if device already exists
       const existingDevice = await Device.findOne({ where: { device_id } });
       if (existingDevice) {
-        throw new Error('Device already exists');
+        return 'Device already exists';
       }
 
       // Create device
