@@ -46,7 +46,7 @@ class DeviceService {
 
   async getDeviceById(deviceId) {
     try {
-      const device = await Device.findOne({ where: { device_id: deviceId } });
+      const device = await Device.findByPk(deviceId);
       if (!device) {
         throw new Error('Device not found');
       }
