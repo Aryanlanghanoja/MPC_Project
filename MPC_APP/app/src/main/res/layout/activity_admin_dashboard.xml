@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -11,6 +12,29 @@
         android:text="Admin Dashboard"
         android:textStyle="bold"
         android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/btnAddDevice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Device"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnOverrides"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Overrides"
+        android:layout_marginTop="12dp" />
+
+    <!-- Weighted content container to host the dynamic device list -->
+    <LinearLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="12dp" />
 
     <Button
         android:id="@+id/btnLogoutAdmin"

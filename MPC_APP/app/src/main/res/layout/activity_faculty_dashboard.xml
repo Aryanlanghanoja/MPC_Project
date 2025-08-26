@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/facultyRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,11 +13,27 @@
         android:textStyle="bold"
         android:textSize="20sp" />
 
+    <!-- Weighted content container for device list -->
+    <LinearLayout
+        android:id="@+id/contentContainerFaculty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="12dp" />
+
+    <Button
+        android:id="@+id/btnCreateOverride"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Override"
+        android:layout_marginTop="12dp" />
+
     <Button
         android:id="@+id/btnLogoutFaculty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Logout"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="12dp" />
 
 </LinearLayout>

@@ -21,10 +21,10 @@ class DeviceService {
         status: 'offline'
       });
 
-      // Log device registration
+      // Log device registration (use a valid action from enum)
       await Log.create({
         device_id,
-        action: 'register',
+        action: 'heartbeat',
         status: 'success'
       });
 
