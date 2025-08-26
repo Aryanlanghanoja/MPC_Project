@@ -24,10 +24,19 @@ class DeviceController {
       }
 
       const device = await deviceService.registerDevice(req.body);
-      res.status(201).json({
+
+      if(device === 'Device already exists') {
+        return res.status(409).json({
+          message: 'Device already exists'
+        });
+      }
+      else {
+        res.status(201).json({
         message: 'Device registered successfully',
         data: device
       });
+      }
+      
     } catch (error) {
       next(error);
     }
