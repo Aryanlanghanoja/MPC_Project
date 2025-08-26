@@ -11,6 +11,9 @@ import com.example.mpc_app.data.model.OverrideRequest
 import com.example.mpc_app.data.network.NetworkModule
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 class FacultyOverridesActivity : AppCompatActivity() {
     private val scope = MainScope()
@@ -54,6 +57,7 @@ class FacultyOverridesActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_override, null)
         val etDevice = view.findViewById<EditText>(R.id.etDeviceId)
         val spinnerAction = view.findViewById<Spinner>(R.id.spinnerAction)
+        val etSeconds = view.findViewById<EditText>(R.id.etSeconds)
         val etExpires = view.findViewById<EditText>(R.id.etExpires)
 
         spinnerAction.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("lock", "unlock"))
@@ -64,13 +68,32 @@ class FacultyOverridesActivity : AppCompatActivity() {
             .setPositiveButton("Create") { d, _ ->
                 val deviceId = etDevice.text.toString().trim()
                 val action = spinnerAction.selectedItem as String
-                val expires = etExpires.text.toString().trim()
-                if (deviceId.isEmpty() || expires.isEmpty()) {
-                    Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show()
+                val secondsStr = etSeconds.text.toString().trim()
+                val expiresTyped = etExpires.text.toString().trim()
+
+                if (deviceId.isEmpty()) {
+                    Toast.makeText(this, "Device ID required", Toast.LENGTH_SHORT).show()
                 } else {
+                    val expiresAt: String = if (secondsStr.isNotEmpty()) {
+                        val sec = secondsStr.toLongOrNull() ?: 0L
+                        val targetMs = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(sec)
+                        // ISO8601 (UTC)
+                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                        sdf.timeZone = TimeZone.getTimeZone("UTC")
+                        sdf.format(Date(targetMs))
+                    } else if (expiresTyped.isNotEmpty()) {
+                        expiresTyped
+                    } else {
+                        // default 5 minutes
+                        val targetMs = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)
+                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                        sdf.timeZone = TimeZone.getTimeZone("UTC")
+                        sdf.format(Date(targetMs))
+                    }
+
                     scope.launch {
                         try {
-                            api.createOverride(OverrideRequest(deviceId, action, expires))
+                            api.createOverride(OverrideRequest(deviceId, action, expiresAt))
                             loadMyOverrides()
                         } catch (e: Exception) {
                             Toast.makeText(this@FacultyOverridesActivity, e.message ?: "Failed", Toast.LENGTH_SHORT).show()

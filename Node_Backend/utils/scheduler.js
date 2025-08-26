@@ -23,6 +23,9 @@ class Scheduler {
         // Check and execute schedules
         await scheduleService.checkAndExecuteSchedules();
         
+        // Trigger overrides that are due now
+        await overrideService.triggerDueOverrides();
+        
         // Clean up expired overrides
         await overrideService.cleanupExpiredOverrides();
         

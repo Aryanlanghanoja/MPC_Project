@@ -10,11 +10,11 @@ class OverrideService {
 
       // Validate user exists and has faculty role
       const user = await User.findByPk(user_id);
-      if (!user || user.role !== 'faculty') {
-        throw new Error('Only faculty members can create overrides');
+      if (!user || (user.role !== 'faculty' && user.role !== 'admin')) {
+        throw new Error('Only faculty or admin can create overrides');
       }
 
-      // Create override
+      // Create override (expires_at here represents the time the action should be applied)
       const override = await Override.create({
         device_id,
         user_id,
@@ -22,15 +22,7 @@ class OverrideService {
         expires_at: new Date(expires_at)
       });
 
-      // Create device command
-      await DeviceCommand.create({
-        device_id,
-        command: action,
-        expires_at: new Date(expires_at),
-        executed: false
-      });
-
-      // Log override creation
+      // NOTE: Delayed execution: device command will be created by scheduler when expires_at <= NOW
       await Log.create({
         device_id,
         user_id,
@@ -114,7 +106,6 @@ class OverrideService {
 
       await override.destroy();
 
-      // Log override deletion
       await Log.create({
         device_id: override.device_id,
         user_id: userId,
@@ -128,12 +119,50 @@ class OverrideService {
     }
   }
 
+  async triggerDueOverrides() {
+    try {
+      const now = new Date();
+      const dueOverrides = await Override.findAll({
+        where: {
+          expires_at: {
+            [require('sequelize').Op.lte]: now
+          }
+        }
+      });
+
+      for (const ov of dueOverrides) {
+        // Create a device command valid for 5 minutes from now
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+        await DeviceCommand.create({
+          device_id: ov.device_id,
+          command: ov.action, // lock or unlock
+          expires_at: expiresAt,
+          executed: false
+        });
+
+        await Log.create({
+          device_id: ov.device_id,
+          user_id: ov.user_id,
+          action: ov.action,
+          status: 'pending'
+        });
+
+        // Remove override after triggering to avoid repeated commands
+        await ov.destroy();
+      }
+
+      return { triggered: dueOverrides.length };
+    } catch (error) {
+      console.error('Error triggering due overrides:', error);
+    }
+  }
+
   async cleanupExpiredOverrides() {
     try {
       const expiredOverrides = await Override.findAll({
         where: {
           expires_at: {
-            [require('sequelize').Op.lt]: new Date()
+            [require('sequelize').Op.lt]: new Date(Date.now() - 60 * 1000) // older than 1 min past due
           }
         }
       });

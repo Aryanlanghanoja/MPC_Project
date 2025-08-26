@@ -18,10 +18,18 @@
         android:layout_marginTop="8dp" />
 
     <EditText
+        android:id="@+id/etSeconds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Expires in (seconds from now)"
+        android:inputType="number"
+        android:layout_marginTop="8dp" />
+
+    <EditText
         android:id="@+id/etExpires"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Expires at (ISO 8601)"
+        android:hint="Or exact expires_at (ISO 8601)"
         android:layout_marginTop="8dp" />
 
 </LinearLayout>
