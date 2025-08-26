@@ -80,6 +80,7 @@ class DeviceService {
 
   async getDeviceCommand(deviceId) {
     try {
+      // 1) Prefer explicit pending DeviceCommand
       const command = await DeviceCommand.findOne({
         where: {
           device_id: deviceId,
@@ -92,11 +93,28 @@ class DeviceService {
       });
 
       if (command) {
-        // Mark command as executed
+        // Mark command as executed to avoid re-sending
         await command.update({ executed: true });
+        return command;
       }
 
-      return command;
+      // 2) Fall back to current device status -> treat locked/unlocked as implicit command
+      const device = await Device.findOne({ where: { device_id: deviceId } });
+      if (!device) {
+        return null;
+      }
+
+      if (device.status === 'locked' || device.status === 'unlocked') {
+        // Return a lightweight, command-like object with required shape
+        return {
+          device_id: deviceId,
+          command: device.status === 'locked' ? 'lock' : 'unlock',
+          expires_at: null,
+          executed: true
+        };
+      }
+
+      return null;
     } catch (error) {
       throw error;
     }
