@@ -41,6 +41,12 @@ data class Device(
     val status: String
 )
 
+data class DeviceRegisterRequest(
+    val device_id: String,
+    val name: String,
+    val location: String
+)
+
 data class DeviceCommandRequest(
     val device_id: String,
     val command: String,
@@ -82,6 +88,16 @@ data class OverrideRequest(
     val expires_at: String
 )
 
+data class OverrideEntry(
+    val id: Int,
+    val device_id: String,
+    val user_id: Int?,
+    val action: String,
+    val expires_at: String,
+    val createdAt: String,
+    val updatedAt: String
+)
+
 // Logs (admin)
 
 data class LogEntry(
@@ -91,4 +107,12 @@ data class LogEntry(
     val action: String,
     val timestamp: String,
     val status: String
+)
+
+data class LogStats(
+    val total: Int,
+    val success: Int,
+    val failed: Int,
+    val pending: Int,
+    val actionStats: List<Map<String, String>>
 )

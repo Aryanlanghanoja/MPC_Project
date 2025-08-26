@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <EditText
+        android:id="@+id/etDeviceId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Device ID" />
+
+    <EditText
+        android:id="@+id/etDay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Day of week (0-6)"
+        android:inputType="number"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/etOpen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Open time (HH:MM:SS)"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/etClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Close time (HH:MM:SS)"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

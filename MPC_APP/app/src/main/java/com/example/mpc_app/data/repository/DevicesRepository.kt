@@ -18,6 +18,11 @@ class DevicesRepository(context: Context) {
         return res.data ?: throw IllegalStateException(res.error ?: "Not found")
     }
 
+    suspend fun registerDevice(deviceId: String, name: String, location: String): Device {
+        val res = api.registerDevice(DeviceRegisterRequest(device_id = deviceId, name = name, location = location))
+        return res.data ?: throw IllegalStateException("Failed to register device")
+    }
+
     suspend fun sendCommand(deviceId: String, command: String, expiresAtIso: String? = null) {
         api.sendDeviceCommand(DeviceCommandRequest(device_id = deviceId, command = command, expires_at = expiresAtIso))
     }
