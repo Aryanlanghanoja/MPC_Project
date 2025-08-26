@@ -13,6 +13,44 @@
         android:textStyle="bold"
         android:textSize="20sp" />
 
+    <!-- Status Display Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/holo_blue_light"
+        android:padding="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current Servo Status"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/tvServoStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/tvLastUpdate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="2dp" />
+
+    </LinearLayout>
+
     <!-- Weighted content container for device list -->
     <LinearLayout
         android:id="@+id/contentContainerFaculty"

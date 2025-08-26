@@ -10,10 +10,13 @@ import com.example.mpc_app.data.model.Device
 import com.example.mpc_app.data.repository.DevicesRepository
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class FacultyDashboardActivity : AppCompatActivity() {
     private val scope = MainScope()
     private val repo by lazy { DevicesRepository(this) }
+    private val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,10 +58,47 @@ class FacultyDashboardActivity : AppCompatActivity() {
                 listView.setOnItemClickListener { _, _, position, _ ->
                     showControlDialog(devices[position])
                 }
+
+                // Update servo status display
+                updateServoStatus(devices)
             } catch (e: Exception) {
                 Toast.makeText(this@FacultyDashboardActivity, e.message ?: "Failed to load", Toast.LENGTH_SHORT).show()
+                updateServoStatusError()
             }
         }
+    }
+
+    private fun updateServoStatus(devices: List<Device>) {
+        val tvServoStatus = findViewById<TextView>(R.id.tvServoStatus)
+        val tvLastUpdate = findViewById<TextView>(R.id.tvLastUpdate)
+        
+        if (devices.isEmpty()) {
+            tvServoStatus.text = "No devices found"
+            tvLastUpdate.text = ""
+            return
+        }
+
+        // Build status text for all devices
+        val statusText = devices.joinToString("\n\n") { device ->
+            val status = device.status ?: "Unknown"
+            val servoPosition = when (status.lowercase()) {
+                "locked" -> "0° (Locked Position)"
+                "unlocked" -> "180° (Unlocked Position)"
+                else -> "Unknown Position"
+            }
+            "Device: ${device.name}\nStatus: $status\nServo: $servoPosition"
+        }
+        
+        tvServoStatus.text = statusText
+        tvLastUpdate.text = "Last updated: ${dateFormat.format(Date())}"
+    }
+
+    private fun updateServoStatusError() {
+        val tvServoStatus = findViewById<TextView>(R.id.tvServoStatus)
+        val tvLastUpdate = findViewById<TextView>(R.id.tvLastUpdate)
+        
+        tvServoStatus.text = "Error loading status"
+        tvLastUpdate.text = "Last updated: ${dateFormat.format(Date())}"
     }
 
     private fun showControlDialog(device: Device) {
@@ -71,7 +111,7 @@ class FacultyDashboardActivity : AppCompatActivity() {
                     try {
                         repo.sendCommand(device.device_id, cmd)
                         Toast.makeText(this@FacultyDashboardActivity, "Sent $cmd", Toast.LENGTH_SHORT).show()
-                        loadDevices()
+                        loadDevices() // Refresh to update status
                     } catch (e: Exception) {
                         Toast.makeText(this@FacultyDashboardActivity, e.message ?: "Failed", Toast.LENGTH_SHORT).show()
                     }

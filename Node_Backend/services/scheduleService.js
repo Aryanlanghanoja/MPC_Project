@@ -7,13 +7,16 @@ class ScheduleService {
     try {
       const { device_id, day_of_week, open_time, close_time } = scheduleData;
 
-      // Check if schedule already exists for this device and day
-      const existingSchedule = await Schedule.findOne({
+      // Check for overlapping schedules for this device and day
+      const existingSchedules = await Schedule.findAll({
         where: { device_id, day_of_week }
       });
 
-      if (existingSchedule) {
-        throw new Error('Schedule already exists for this device and day');
+      // Check for overlaps
+      for (const existing of existingSchedules) {
+        if (this.hasTimeOverlap(open_time, close_time, existing.open_time, existing.close_time)) {
+          throw new Error(`Schedule overlaps with existing schedule: ${existing.open_time}-${existing.close_time}`);
+        }
       }
 
       const schedule = await Schedule.create({
@@ -36,11 +39,52 @@ class ScheduleService {
     }
   }
 
+  // Helper method to check if two time ranges overlap
+  hasTimeOverlap(start1, end1, start2, end2) {
+    // Convert time strings to minutes for easier comparison
+    const start1Minutes = this.timeToMinutes(start1);
+    const end1Minutes = this.timeToMinutes(end1);
+    const start2Minutes = this.timeToMinutes(start2);
+    const end2Minutes = this.timeToMinutes(end2);
+
+    // Check if ranges overlap
+    return start1Minutes < end2Minutes && start2Minutes < end1Minutes;
+  }
+
+  // Helper method to convert HH:MM:SS to minutes
+  timeToMinutes(timeStr) {
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  }
+
   async updateSchedule(scheduleId, updateData) {
     try {
       const schedule = await Schedule.findByPk(scheduleId);
       if (!schedule) {
         throw new Error('Schedule not found');
+      }
+
+      // If updating time-related fields, check for overlaps
+      if (updateData.open_time || updateData.close_time) {
+        const newOpenTime = updateData.open_time || schedule.open_time;
+        const newCloseTime = updateData.close_time || schedule.close_time;
+        const dayOfWeek = updateData.day_of_week || schedule.day_of_week;
+
+        // Check for overlapping schedules (excluding the current one being updated)
+        const existingSchedules = await Schedule.findAll({
+          where: { 
+            device_id: schedule.device_id, 
+            day_of_week: dayOfWeek,
+            id: { [require('sequelize').Op.ne]: scheduleId } // Exclude current schedule
+          }
+        });
+
+        // Check for overlaps
+        for (const existing of existingSchedules) {
+          if (this.hasTimeOverlap(newOpenTime, newCloseTime, existing.open_time, existing.close_time)) {
+            throw new Error(`Schedule overlaps with existing schedule: ${existing.open_time}-${existing.close_time}`);
+          }
+        }
       }
 
       await schedule.update(updateData);
