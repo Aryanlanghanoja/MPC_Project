@@ -60,14 +60,14 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.use("/", webRouter);
-app.use("/auth", authRoute.router);
-app.use("/api/user", userRouter);
-app.use("/api/lead", leadRouter);
-app.use("/api/followup", followupRouter);
-app.use("/api/task", taskRouter);
-app.use("/api/document", documentRouter);
+// // Routes
+// app.use("/", webRouter);
+// app.use("/auth", authRoute.router);
+// app.use("/api/user", userRouter);
+// app.use("/api/lead", leadRouter);
+// app.use("/api/followup", followupRouter);
+// app.use("/api/task", taskRouter);
+// app.use("/api/document", documentRouter);
 
 // Root route
 app.get("/", (req, res) => {
