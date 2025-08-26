@@ -1,87 +1,132 @@
-require("dotenv").config();
-const express = require("express");
-const serverless = require("serverless-http");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const session = require("express-session");
-const path = require("path");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const sequelize = require('./config/database');
 
-const passport = require("passport");
-const passportStrategy = require("./passport");
-const cookieSession = require("cookie-session");
-const cookieParser = require("cookie-parser");
+// Import models to establish associations
+require('./models/index');
 
-const authRoute = require("./middleware/auth");
+// Import middleware
+const errorHandler = require('./middleware/errorHandler');
 
-// Database Connection
-const dbConfig = require("./config/db.config");
-const db = require("./helper/db.helper");
+// Import routes
+const authRoutes = require('./routes/auth.routes');
+const deviceRoutes = require('./routes/device.routes');
+const deviceCommRoutes = require('./routes/deviceComm.routes');
+const scheduleRoutes = require('./routes/schedule.routes');
+const overrideRoutes = require('./routes/override.routes');
+const logRoutes = require('./routes/log.routes');
 
-// Routes
-const webRouter = require("./routes/web.routes");
-const userRouter = require("./routes/user.routes");
-const leadRouter = require("./routes/leads.routes");
-const followupRouter = require("./routes/followup.routes");
-const taskRouter = require("./routes/tasks.routes");
-const documentRouter = require("./routes/documents.routes");
+// Import scheduler
+const scheduler = require('./utils/scheduler');
 
 const app = express();
 
-// View engine and static files
-app.set("view engine", "ejs");
-app.set("views", "./view");
-app.use("/public", express.static(path.join(__dirname, "public/")));
+// Security middleware
+app.use(helmet());
 
-app.use(
-  cors({
-    origin: "https://trackly-five.vercel.app", // change as needed
-    credentials: true,
-  })
-);
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// CORS configuration
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  credentials: true
+}));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      sameSite: "lax",
-    },
-  })
-);
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use(passport.initialize());
-app.use(passport.session());
-
-// // Routes
-// app.use("/", webRouter);
-// app.use("/auth", authRoute.router);
-// app.use("/api/user", userRouter);
-// app.use("/api/lead", leadRouter);
-// app.use("/api/followup", followupRouter);
-// app.use("/api/task", taskRouter);
-// app.use("/api/document", documentRouter);
-
-// Root route
-app.get("/", (req, res) => {
-  res.send("Welcome to the Trackly Lead Management API!");
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
-// Conditional for local dev
-if (process.env.NODE_ENV !== "production") {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/overrides', overrideRoutes);
+app.use('/api/logs', logRoutes);
+
+// Device communication endpoint (separate from device routes)
+app.use('/api/device-comm', deviceCommRoutes);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Smart Door Lock Backend API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      devices: '/api/devices',
+      schedules: '/api/schedules',
+      overrides: '/api/overrides',
+      logs: '/api/logs',
+      deviceComm: '/api/device-comm'
+    }
   });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    message: `The requested endpoint ${req.originalUrl} does not exist`
+  });
+});
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
+
+// Database connection and server startup
+const PORT = process.env.PORT || 5000;
+
+async function startServer() {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    console.log('✅ Database connection established successfully.');
+
+    // Sync database (create tables if they don't exist)
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synchronized.');
+
+    // Start scheduler
+    scheduler.start();
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Smart Door Lock Backend running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/`);
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 }
 
-// ✅ Export for Vercel
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  scheduler.stop();
+  await sequelize.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  scheduler.stop();
+  await sequelize.close();
+  process.exit(0);
+});
+
+// Start the server
+startServer();
+
 module.exports = app;
-module.exports.handler = serverless(app);
