@@ -30,12 +30,11 @@ class DeviceController {
           message: 'Device already exists'
         });
       }
-      else {
+
         res.status(201).json({
         message: 'Device registered successfully',
         data: device
       });
-      }
       
     } catch (error) {
       next(error);
@@ -57,6 +56,11 @@ class DeviceController {
   static async getDeviceById(req, res, next) {
     try {
       const device = await deviceService.getDeviceById(req.params.deviceId);
+      if (!device) {
+        return res.status(404).json({
+          message: 'Device not found'
+        });
+      }
       res.status(200).json({
         message: 'Device retrieved successfully',
         data: device
@@ -80,6 +84,11 @@ class DeviceController {
         req.params.deviceId,
         req.body.status
       );
+      if(device === 'Device not found') {
+        return res.status(404).json({
+          message: 'Device not found'
+        });
+      }
       res.status(200).json({
         message: 'Device status updated successfully',
         data: device
